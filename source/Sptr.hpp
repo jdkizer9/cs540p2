@@ -11,21 +11,19 @@
 
 #include <iostream>
 #include <assert.h>
+#include <atomic>
 
 namespace cs540 {
     
     class RefCounter {
     public:
         RefCounter(unsigned long long c) : count(c) { }
-        
-        //need to lock these
-        //potentially could use atomic modify
+
         void Increment() {count++;}
-        void Decrement() {count--;}
-        unsigned long long getCount() {return count;}
-        
+        unsigned long long Decrement() {return count--;}
+        unsigned long long getCount() const {return count;}
     private:
-        unsigned long long count;
+        std::atomic<unsigned long long> count;
     };
     
     template <typename T> class Sptr {
@@ -57,7 +55,7 @@ namespace cs540 {
         //U* must be implicitly convertible to T*
         //in this case, U is the derived (B) and T is the base (A)
         template <typename U> Sptr(const Sptr<U> &ptr) {
-            T *tPtr = static_cast<T*>(&(*ptr));
+            T *tPtr = static_cast<T*>(ptr.operator->());
             
             object = tPtr;
             
@@ -88,18 +86,8 @@ namespace cs540 {
             if ( (this == &ptr) || (object == ptr.object) )
                 return *this;
             
-            //if this pointer currently points to an object
-            //decrement the reference count and delete
-            //the object if there are no longer any references
-            if (object != nullptr) {
-                
-                assert(refCount != nullptr);
-                refCount->Decrement();
-                if (refCount->getCount() == 0){
-                    delete object;
-                    delete refCount;
-                }                
-            }
+            //reset the pointer
+            reset();
             
             object = ptr.object;
             refCount = ptr.refCount;
@@ -119,17 +107,13 @@ namespace cs540 {
         //handles case where objects are already the same
         //should do nothing in either case
         template <typename U> Sptr<T> &operator=(const Sptr<U> &ptr) {
-            T *tPtr = static_cast<T*>(&(*ptr));
+            T *tPtr = static_cast<T*>(ptr.operator->());
             
             if ( object == tPtr )
                 return *this;
             
-            assert(refCount != nullptr);
-            refCount->Decrement();
-            if (refCount->getCount() == 0){
-                delete object;
-                delete refCount;
-            }
+            //reset the pointer
+            reset();
             
             object = tPtr;
             //improve upon this
@@ -153,9 +137,17 @@ namespace cs540 {
             if (object == nullptr)
                 return;
             
+            //this pointer currently points to an object
+            //decrement the reference count
+            // if there are no more references to the object,
+            //delete the object
+            //1) refCount Incrememnt and Decrement are atomic operations
+            //2) the actual Sptr's are not shared by threads /tasks
+            //Therefore, if Decrement returns 0, that means that this Sptr
+            //was the lone reference and the object and refCount can now be safely
+            //deleted
             assert(refCount != nullptr);
-            refCount->Decrement();
-            if (refCount->getCount() == 0){
+            if (refCount->Decrement() == 0){
                 delete object;
                 delete refCount;
             }
@@ -165,6 +157,7 @@ namespace cs540 {
         }
        
         T &operator*() const {
+            assert(object != nullptr);
             std::cout<<"Deferencing... Reference Count: "<<refCount->getCount()<<std::endl;
             return *object;
         }
@@ -181,12 +174,22 @@ namespace cs540 {
         
     };
     
-//    template <typename T1, typename T2>
-//    bool operator==(const Sptr<T1> &, const Sptr<T2> &);
-//    
-//    template <typename T, typename U>
-//    Sptr<T> static_pointer_cast(const Sptr<U> &sp);
-//    
+    template <typename T1, typename T2>
+    bool operator==(const Sptr<T1> &ptr1, const Sptr<T2> &ptr2) {
+        T1 *t1Ptr2 = static_cast<T1*>(ptr2.operator->());
+        return (ptr1.operator->() == t1Ptr2);
+    }
+    
+    template <typename T, typename U>
+    Sptr<T> static_pointer_cast(const Sptr<U> &sp) {
+        //get object* defined in sp
+        //static cast from U* to T*
+        
+        T *tPtr = static_cast<T*>(sp.operator->());
+        //return new T Sptr
+        return Sptr<T>(tPtr);
+    }
+    
 //    template <typename T, typename U>
 //    Sptr<T> dynamic_pointer_cast(const Sptr<U> &sp);
     

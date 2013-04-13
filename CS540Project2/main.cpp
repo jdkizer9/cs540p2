@@ -65,16 +65,21 @@ int main(int argc, const char * argv[])
                 bp1 = bp1; // Self-assignment must be safe.
                 bp1 = bp2; // Self-assignment must be safe.
                 ap3 = bp2; // Self-assignment must be safe, even if one is a base class pointer.
+    
+    bp2 = ap3; //
 
                 (*bp1).foo(456); // Can be dereferenced.
                 bp1.reset(); // Set to null pointer.
-//                
-//                if (bp1 == bp2) { ... } // Can be compared.
-//                if (bp1 == ap1) { ... } // Implicit conversion must happen.
-//                
-//                // Static casting, returns a smart pointer.
-//                Sptr<B> bp3(static_pointer_cast<B>(ap1));
-//                
+                bp1.reset(); // Set to null pointer.
+
+    //need to test with 2 NULL, 1 NULL/non-NULL, 1 non-NULL/1NULL, 2 non-NULL
+    if (bp1 == bp2) { std::cout << "Hello, World!\n"; } // Can be compared.
+    if (bp2 == bp1) { std::cout << "Hello, World!\n"; } // Can be compared.
+    if (bp1 == ap1) { std::cout << "Hello, World!\n"; } // Implicit conversion must happen.
+                
+                // Static casting, returns a smart pointer.
+                Sptr<B> bp3(static_pointer_cast<B>(ap1));
+                
 //    {
 //        Sptr<A> ap;
 //        {
