@@ -12,17 +12,32 @@
 
 class A {
 public:
-    A() {};
-    A(const char *p) : s(p) {};
+    A() {std::cout << "A Default Constructor!\n";};
+    A(const char *p) : s(p) {std::cout << "A char* Constructor!\n";};
     void foo(int i) {std::cout<<"Printing i: "<<i<<std::endl;};
+    
+    ~A() {
+        std::cout << "A Destructor!\n";
+    }
     
 private:
     std::string s;
 };
 class B : public A {
 public:
-    B() : A("B"), buf(new char[10]) {}
-    ~B() { delete [] buf; }
+    B() : A("B"), buf(new char[10]) {
+        std::cout << "B Default Constructor!\n";
+    }
+    ~B() {
+        delete [] buf;
+        std::cout << "B Destructor!\n";
+    }
+    
+    void non_const_funct() {
+        buf[0] = 'A';
+    }
+    
+    void const_funct() const {};
 private:
     char *buf;
 };
@@ -79,25 +94,38 @@ int main(int argc, const char * argv[])
                 
                 // Static casting, returns a smart pointer.
                 Sptr<B> bp3(static_pointer_cast<B>(ap1));
+    
+                // Static casting, returns a smart pointer.
+                Sptr<A> ap4(dynamic_pointer_cast<A>(bp3));
+    
+    {
+        Sptr<A> ap;
+        {
+            Sptr<B> bp(new B); // Line L1
+            ap = bp;
+        }
+        // At this point, the destructor for ap will cause the object created at Line
+        // L1 to be deleted.  However, note that B is not polymorphic.  Thus, to
+        // ensure that B::~B() is called and buf freed, the object must be deleted
+        // via a pointer to B.
+    }
                 
-//    {
-//        Sptr<A> ap;
-//        {
-//            Sptr<B> bp(new B); // Line L1
-//            ap = bp;
-//        }
-//        // At this point, the destructor for ap will cause the object created at Line
-//        // L1 to be deleted.  However, note that B is not polymorphic.  Thus, to
-//        // ensure that B::~B() is called and buf freed, the object must be deleted
-//        // via a pointer to B.
-//    }
-//                
-//                // const-ness should be preserved.
-//                Sptr<const B> c_bp(new B);
-//                c_bp->non_const_funct(); // Should be a syntax error.
-//                
-//                // Test for null using safe-bool idiom.
-//                if (sp) { ... } // True if non-null.
+                // const-ness should be preserved.
+                Sptr<const B> c_bp(new B);
+                //c_bp->non_const_funct(); // Should be a syntax error.
+                c_bp->const_funct(); // Should be a syntax error.
+                
+                // Test for null using safe-bool idiom.
+                if (bp1)
+                    std::cout << "bp1 is not NULL!\n";
+                else
+                    std::cout << "bp1 is NULL!\n";
+    
+    // Test for null using safe-bool idiom.
+    if (ap1)
+        std::cout << "ap1 is not NULL!\n";
+    else
+        std::cout << "ap1 is NULL!\n";
     
     return 0;
 }

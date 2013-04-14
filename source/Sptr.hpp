@@ -15,33 +15,121 @@
 
 namespace cs540 {
     
+    //Safe Bool Idiom Code courtesy of Bjorn Karlsson
+    //http://www.artima.com/cppsource/safebool3.html
+    class safe_bool_base {
+    public:
+        typedef void (safe_bool_base::*bool_type)() const;
+        void this_type_does_not_support_comparisons() const {}
+        
+        safe_bool_base() {}
+        safe_bool_base(const safe_bool_base&) {}
+        safe_bool_base& operator=(const safe_bool_base&) {return *this;}
+        ~safe_bool_base() {}
+    };
+    
+    template <typename T=void> class safe_bool : public safe_bool_base {
+    public:
+        operator bool_type() const {
+            return (static_cast<const T*>(this))->boolean_test()
+            ? &safe_bool_base::this_type_does_not_support_comparisons : 0;
+        }
+    protected:
+        ~safe_bool() {}
+    };
+    
+    template<> class safe_bool<void> : public safe_bool_base {
+    public:
+        operator bool_type() const {
+            return boolean_test()==true ?
+            &safe_bool_base::this_type_does_not_support_comparisons : 0;
+        }
+    protected:
+        virtual bool boolean_test() const=0;
+        virtual ~safe_bool() {}
+    };
+    
+    template <typename T, typename U>
+    bool operator==(const safe_bool<T>& lhs,const safe_bool<U>& rhs) {
+        lhs.this_type_does_not_support_comparisons();
+        return false;
+    }
+    
+    template <typename T,typename U>
+    bool operator!=(const safe_bool<T>& lhs,const safe_bool<U>& rhs) {
+        lhs.this_type_does_not_support_comparisons();
+        return false;	
+    }
+    
+    //C++ type erasure code courtesy of user jsmith
+    //http://www.cplusplus.com/articles/oz18T05o/    
+    class Object {
+        
+        struct ObjectConcept {
+            virtual ~ObjectConcept() {}
+        };
+        
+        template< typename T > class OriginalObject : public ObjectConcept {
+        public:
+            OriginalObject ( T *t ) : objPtr( t ) {}
+            virtual ~OriginalObject() {
+                assert(objPtr != nullptr);
+                delete objPtr;
+            }
+        private:
+            T *objPtr;
+        };
+        
+        ObjectConcept *objCon;
+        
+    public:
+        template< typename T > Object( T *obj ) :
+        objCon( new OriginalObject<T>( obj ) ) {
+            //std::cout<<"Creating new OriginalObject: "<<obj<<std::endl;
+        }
+        
+        ~Object() {delete objCon;}
+        
+    };
+    
     class RefCounter {
     public:
         RefCounter(unsigned long long c) : count(c) { }
 
         void Increment() {count++;}
-        unsigned long long Decrement() {return count--;}
+        
+        //only the value from Decrement should be trusted to determine whether to delete objects
+        unsigned long long Decrement() {return --count;}
+        
+        //value return from getCount not considered thread safe.
         unsigned long long getCount() const {return count;}
     private:
         std::atomic<unsigned long long> count;
     };
     
-    template <typename T> class Sptr {
+    template <typename T> class Sptr : public safe_bool<> {
         //API
     public:
         //should this be initialized to 0 or 1 in this instance?
-        Sptr() : object(nullptr), refCount(nullptr) {
-            std::cout<<"Calling Empty Constructor"<<std::endl;};
+        Sptr() : object(nullptr), refCount(nullptr), originalObject(nullptr) {
+            //std::cout<<"Calling Empty Constructor"<<std::endl;
+        };
         
         //
         template <typename U>
         Sptr(U * ptr) : object(ptr), refCount(new RefCounter(1)) {
-            std::cout<<"Calling Obj Ptr Constructor"<<std::endl;
+            originalObject = new Object(ptr);
+            //std::cout<<"Calling Obj Ptr Constructor: "<<ptr<<std::endl;
+        }
+        
+        ~Sptr() {
+            reset();
         }
         
         //need to account for copying null ptr
         Sptr(const Sptr &ptr) {
             object = ptr.object;
+            originalObject = ptr.originalObject;
             refCount = ptr.refCount;
             //only increment reference count in the case
             //that there is an actual object
@@ -55,9 +143,10 @@ namespace cs540 {
         //U* must be implicitly convertible to T*
         //in this case, U is the derived (B) and T is the base (A)
         template <typename U> Sptr(const Sptr<U> &ptr) {
-            T *tPtr = static_cast<T*>(ptr.operator->());
+            T *tPtr = static_cast<T*>(ptr.get());
             
             object = tPtr;
+            originalObject = ptr.getOriginalObject();
             
             //improve upon this
             refCount = ptr.getRefCounter();
@@ -70,14 +159,6 @@ namespace cs540 {
             }
             
         }
-        
-        RefCounter *getRefCounter() const {return refCount;}
-        
-        
-        
-        //need to account for assigning null ptr
-        
-        
         //handle cases where ptr refers to self AND
         //where objects are already the same
         //should do nothing in either case
@@ -90,6 +171,7 @@ namespace cs540 {
             reset();
             
             object = ptr.object;
+            originalObject = ptr.originalObject;
             refCount = ptr.refCount;
             
             //only increment reference count in the case
@@ -107,7 +189,7 @@ namespace cs540 {
         //handles case where objects are already the same
         //should do nothing in either case
         template <typename U> Sptr<T> &operator=(const Sptr<U> &ptr) {
-            T *tPtr = static_cast<T*>(ptr.operator->());
+            T *tPtr = static_cast<T*>(ptr.get());
             
             if ( object == tPtr )
                 return *this;
@@ -116,6 +198,7 @@ namespace cs540 {
             reset();
             
             object = tPtr;
+            originalObject = ptr.getOriginalObject();
             //improve upon this
             refCount = ptr.getRefCounter();
             
@@ -148,50 +231,104 @@ namespace cs540 {
             //deleted
             assert(refCount != nullptr);
             if (refCount->Decrement() == 0){
-                delete object;
+                //delete object;
+                //only delete original object
+                assert(originalObject != nullptr);
+                delete originalObject;
                 delete refCount;
             }
             
             object = nullptr;
+            originalObject = nullptr;
             refCount = nullptr;
         }
        
         T &operator*() const {
             assert(object != nullptr);
-            std::cout<<"Deferencing... Reference Count: "<<refCount->getCount()<<std::endl;
+            //std::cout<<"Deferencing... Reference Count: "<<refCount->getCount()<<std::endl;
             return *object;
         }
         
-        T *operator->() const { return object; }
+        T *operator->() const { return get(); }
         
-//        T *get() const;
-//        
+        T *get() const { return object; }
+        
         //operator unspecified_bool_type() const;
-               
+        
+        
+        RefCounter *getRefCounter() const {return refCount;}
+        Object *getOriginalObject() const {return originalObject;}
+        
+        
+        
+        //we need to be very careful with this, as this
+        //could cause objects to be leaked
+        void setObject(T *obj) {
+            //assert(object == nullptr);
+            object = obj;
+        }
+        
+    protected:
+        bool boolean_test() const {
+            return (object != nullptr);
+        }
+        
     private:
         RefCounter *refCount;
         T *object;
+        Object *originalObject;
         
     };
     
     template <typename T1, typename T2>
     bool operator==(const Sptr<T1> &ptr1, const Sptr<T2> &ptr2) {
-        T1 *t1Ptr2 = static_cast<T1*>(ptr2.operator->());
-        return (ptr1.operator->() == t1Ptr2);
+        T1 *t1Ptr2 = static_cast<T1*>(ptr2.get());
+        return (ptr1.get() == t1Ptr2);
     }
     
     template <typename T, typename U>
     Sptr<T> static_pointer_cast(const Sptr<U> &sp) {
-        //get object* defined in sp
-        //static cast from U* to T*
+        //possible that static_cast changes the pointer value
+        //due to multiple inheritance
+        T *tPtr = static_cast<T*>(sp.get());
         
-        T *tPtr = static_cast<T*>(sp.operator->());
-        //return new T Sptr
-        return Sptr<T>(tPtr);
+        //therefore, we need to assign the pointer returned from
+        //static_cast, but we also need to preserve the originalObject
+        //and refCount from sp
+        
+        //create object using copy constructor using sp
+        Sptr<T> retPtr(sp);
+        
+        //set object to value returned from static_cast
+        retPtr.setObject(tPtr);
+        
+        //return new smart pointer
+        return retPtr;
     }
     
-//    template <typename T, typename U>
-//    Sptr<T> dynamic_pointer_cast(const Sptr<U> &sp);
+    template <typename T, typename U>
+    Sptr<T> dynamic_pointer_cast(const Sptr<U> &sp) {
+        //possible that dynamic_cast changes the pointer value
+        //due to multiple inheritance
+        T *tPtr = dynamic_cast<T*>(sp.get());
+        
+        //if the returned value is null, return a Sptr to nullptr
+        if (tPtr==0)
+            return Sptr<T>();
+        
+        //we need to assign the pointer returned from dynamic_cast
+        //but we also need to preserve the originalObject
+        //and refCount from sp
+        
+        //create object using copy constructor using sp
+        Sptr<T> retPtr(sp);
+        
+        //set object to value returned from static_cast
+        retPtr.setObject(tPtr);
+        
+        //return new smart pointer
+        return retPtr;
+    }
     
 }
 
