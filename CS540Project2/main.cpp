@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include "Sptr.hpp"
+#include "SkipList.hpp"
 
 class A {
 public:
@@ -126,6 +127,83 @@ int main(int argc, const char * argv[])
         std::cout << "ap1 is not NULL!\n";
     else
         std::cout << "ap1 is NULL!\n";
+    
+    typedef SkipList<int, std::string, 1> SLI;
+    SLI sl;
+    SLI::ValueType pair0(0,"happy");
+    SLI::ValueType pair1(1,"birthday");
+    SLI::ValueType pair2(2,"yes");
+    SLI::ValueType pair3(3,"no");
+    
+    
+    sl.insert(pair1);
+    sl.insert(pair0);
+    sl.insert(pair3);
+    
+    
+    SLI::Iterator it = sl.begin();
+    SLI::ConstIterator c_it = sl.begin();
+    
+    SLI::ConstIterator c_it2(it);
+    SLI::ConstIterator c_it3(c_it);
+    
+    c_it++;
+    
+    c_it2 = c_it;
+    c_it = it;
+    
+    if (it == c_it)
+        std::cout << "The iterators are equal!\n";
+    else
+        std::cout << "The iterators are NOT equal!\n";
+    
+    if (c_it == it)
+        std::cout << "The iterators are equal!\n";
+    else
+        std::cout << "The iterators are NOT equal!\n";
+    
+    SLI::ValueType i1 = *(it);
+    SLI::ValueType i2 = *(c_it);
+    
+    
+    int x = 7;
+    const int &c_int = x;
+    
+    x++;
+    
+    int y = c_int;
+    
+    
+    
+    
+    it++;
+    
+    SLI::Iterator it2 = sl.end();
+    
+    it2 = it;
+    it = sl.end();
+    it--;
+    it2--;
+    
+    auto retVal = sl.insert(pair2);
+    retVal = sl.insert(pair2);
+    
+    sl.clear();
+    
+    SLI sl1;
+    
+    sl1.insert(pair1);
+    
+    sl = sl1;
+    
+    
+    if (sl == sl1)  
+        std::cout << "The lists are equal!\n";
+    else
+        std::cout << "The lists are NOT equal!\n";
+    
+    
+    
     
     return 0;
 }
