@@ -8,6 +8,7 @@
 // Updated to test git
 
 #include <iostream>
+#include <sstream>
 #include "Sptr.hpp"
 #include "SkipList.hpp"
 
@@ -128,20 +129,46 @@ int main(int argc, const char * argv[])
     else
         std::cout << "ap1 is NULL!\n";
     
-    typedef SkipList<int, std::string, 1> SLI;
+    typedef SkipList<int, std::string, 16> SLI;
     SLI sl;
     SLI::ValueType pair0(0,"happy");
     SLI::ValueType pair1(1,"birthday");
     SLI::ValueType pair2(2,"yes");
     SLI::ValueType pair3(3,"no");
     
-    
+    std::cout<<sl<<std::endl;
     sl.insert(pair1);
+    std::cout<<sl<<std::endl;
     sl.insert(pair0);
+    std::cout<<sl<<std::endl;
     sl.insert(pair3);
+    std::cout<<sl<<std::endl;
+    sl.insert(pair3);
+    std::cout<<sl<<std::endl;
+    
+    sl.clear();
+    
+    std::cout<<sl<<std::endl;
+    sl.insert(pair1);
+    std::cout<<sl<<std::endl;
+    sl.insert(pair0);
+    std::cout<<sl<<std::endl;
+    sl.insert(pair3);
+    std::cout<<sl<<std::endl;
+    sl.insert(pair3);
+    std::cout<<sl<<std::endl;
+    
+    SLI sl1 = sl;
+    
+    std::cout<<sl1<<std::endl;
+    
     
     
     SLI::Iterator it = sl.begin();
+    
+    for (;it != sl.end(); ++it)
+        std::cout << it->first<<":"<<it->second<<std::endl;
+    
     SLI::ConstIterator c_it = sl.begin();
     
     SLI::ConstIterator c_it2(it);
@@ -190,7 +217,7 @@ int main(int argc, const char * argv[])
     
     sl.clear();
     
-    SLI sl1;
+    
     
     sl1.insert(pair1);
     
@@ -202,7 +229,31 @@ int main(int argc, const char * argv[])
     else
         std::cout << "The lists are NOT equal!\n";
     
+    std::cout<<sl<<std::endl;
+    std::cout<<sl1<<std::endl;
     
+//    it = sl.begin();
+//    
+//    for (;it != sl.end(); ++it)
+//        std::cout << it->first<<":"<<it->second<<std::endl;
+//    
+//    c_it = sl1.begin();
+//    
+//    for (;c_it != sl1.end(); ++c_it)
+//        std::cout << it->first<<":"<<it->second<<std::endl;
+    
+    sl.clear();
+    
+    for (size_t i=0; i<0xFFFF; i++) {
+        
+        std::string s = "teststring";
+        std::stringstream ss;
+        ss<<i;
+        s += ss.str();
+        
+        sl.insert(std::make_pair(i, s));
+    }
+    std::cout<<sl<<std::endl;
     
     
     return 0;
