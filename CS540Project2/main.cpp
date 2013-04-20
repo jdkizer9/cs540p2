@@ -253,7 +253,37 @@ int main(int argc, const char * argv[])
         
         sl.insert(std::make_pair(i, s));
     }
-    std::cout<<sl<<std::endl;
+    //std::cout<<sl<<std::endl;
+    
+    sl1 = sl;
+    
+    //std::cout<<sl<<std::endl;
+    
+    if (sl == sl1)
+        std::cout << "The lists are equal!\n";
+    else
+        std::cout << "The lists are NOT equal!\n";
+    
+    if (sl != sl1)
+        std::cout << "The lists are NOT equal!\n";
+    else
+        std::cout << "The lists are equal!\n";
+    
+    
+    
+    
+    
+    if (sl < sl1)
+        std::cout << "sl less than sl1!\n";
+    else
+        std::cout << "sl NOT less than sl1!\n";
+    
+    if (sl1 < sl)
+        std::cout << "sl1 less than sl!\n";
+    else
+        std::cout << "sl1 NOT less than sl!\n";
+    
+    
     
     
     return 0;

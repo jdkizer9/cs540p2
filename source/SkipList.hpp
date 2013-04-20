@@ -302,7 +302,9 @@ namespace cs540 {
         //Destructor
         //Must Deallocate all dynamically allocated objects
         //This is done through clear()
-        ~SkipList() {clear();}
+        ~SkipList() {
+            clear();
+        }
 
         //Size
         size_t size() const { return numEntries[0]; }
@@ -375,8 +377,9 @@ namespace cs540 {
         void erase(Iterator range_beg, Iterator range_end) {
             Iterator it = range_beg;
             while (it != range_end) {
-                erase(it);
+                Iterator tmp(it);
                 ++it;
+                erase(tmp);
             }
         }
         
@@ -628,6 +631,36 @@ namespace cs540 {
     
     template <typename Key_T, typename Mapped_T, size_t MaxLevel>
     bool operator<(const SkipList<Key_T, Mapped_T, MaxLevel> &L1, const SkipList<Key_T, Mapped_T, MaxLevel> &L2) {
+        
+        typename SkipList<Key_T, Mapped_T, MaxLevel>::Iterator it1 = L1.begin();
+        typename SkipList<Key_T, Mapped_T, MaxLevel>::Iterator it2 = L2.begin();
+        
+        typename SkipList<Key_T, Mapped_T, MaxLevel>::Iterator it1End = L1.end();
+        typename SkipList<Key_T, Mapped_T, MaxLevel>::Iterator it2End = L2.end();
+        
+        while (it1 != it1End) {
+            
+            //if we have reached the end of L2, L1 is NOT less than L2
+            if (it2 == it2End)
+                return false;
+            
+            //if there is an element in l1 that is less than its cooresponding
+            //element in l2, return l1 < l2. Return true
+            if ( (it1->first < it2->first) || (it1->second < it2->second) )
+                return true;
+            
+            // if an element in L1 is greater than its core
+            if ( (it2->first < it1->first) || (it2->second < it1->second) )
+                return false;
+            
+            ++it1;
+            ++it2;
+        }
+        //all elements up until it1 end are equal
+        if (it2 == it2End)
+            return false;
+        
+        return true;
     
     }
     
