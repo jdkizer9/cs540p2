@@ -13,6 +13,7 @@
 #include <iterator>
 #include <random>
 #include <chrono>
+#include <assert.h>
 
 namespace cs540 {
  
@@ -87,11 +88,11 @@ namespace cs540 {
             const ValueType *getConstPairPtr() const {return const_cast<const ValueType *>(keyVal);}
            
             bool isHead() const {
-                return (keyVal == &SkipList::headValue);
+                return (keyVal == SkipList::headValue);
             }
             
             bool isTail() const {
-                return (keyVal == &SkipList::tailValue);
+                return (keyVal == SkipList::tailValue);
             }
             
             const Key_T &key() const {
@@ -265,12 +266,12 @@ namespace cs540 {
         
     public:
         //Constructors and Assignment
-        SkipList() : head(&headValue, &head, &tail), tail(&tailValue, &head, &tail), highestLevel(0) {
+        SkipList() : head(headValue, &head, &tail), tail(tailValue, &head, &tail), highestLevel(0) {
             for(size_t i=0; i<MaxLevel; i++)
                 numEntries[i]=0;
         }
         
-        SkipList(const SkipList &sl) : head(&headValue, &head, &tail), tail(&tailValue, &head, &tail), highestLevel(0)  {
+        SkipList(const SkipList &sl) : head(headValue, &head, &tail), tail(tailValue, &head, &tail), highestLevel(0)  {
             
             for(size_t i=0; i<MaxLevel; i++)
                 numEntries[i]=0;
@@ -396,8 +397,8 @@ namespace cs540 {
         
         
         
-        static ValueType headValue;
-        static ValueType tailValue;
+        static ValueType *headValue;
+        static ValueType *tailValue;
         
         
     private:
@@ -673,10 +674,14 @@ namespace cs540 {
     
     
     //static members
+    
+    //we are relying on headValue and tailValue to be unique pointers. Assign to as pointers to static data.
+    static int hv=0;
     template <typename Key_T, typename Mapped_T, size_t MaxLevel>
-    typename SkipList<Key_T, Mapped_T, MaxLevel>::ValueType SkipList<Key_T, Mapped_T, MaxLevel>::headValue;
+    typename SkipList<Key_T, Mapped_T, MaxLevel>::ValueType *SkipList<Key_T, Mapped_T, MaxLevel>::headValue = (typename SkipList<Key_T, Mapped_T, MaxLevel>::ValueType *) &hv;
+    static int tv=0;
     template <typename Key_T, typename Mapped_T, size_t MaxLevel>
-    typename SkipList<Key_T, Mapped_T, MaxLevel>::ValueType SkipList<Key_T, Mapped_T, MaxLevel>::tailValue;
+    typename SkipList<Key_T, Mapped_T, MaxLevel>::ValueType *SkipList<Key_T, Mapped_T, MaxLevel>::tailValue = (typename SkipList<Key_T, Mapped_T, MaxLevel>::ValueType *) &tv;
     
     
     

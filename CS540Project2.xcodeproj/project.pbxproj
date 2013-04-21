@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		48720FF81703D36800B61DA7 /* Sptr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 48720FF61703D36800B61DA7 /* Sptr.cpp */; };
 		488DBE721720DB6A0059EBCA /* SkipList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 488DBE701720DB6A0059EBCA /* SkipList.cpp */; };
-		489004A516F7281A00FA1730 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 489004A416F7281A00FA1730 /* main.cpp */; };
+		488DBE761722FB320059EBCA /* SLTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 488DBE731722E9830059EBCA /* SLTest.cpp */; };
 		489004A716F7281A00FA1730 /* CS540Project2.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 489004A616F7281A00FA1730 /* CS540Project2.1 */; };
 /* End PBXBuildFile section */
 
@@ -31,6 +31,7 @@
 		48720FF71703D36800B61DA7 /* Sptr.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Sptr.hpp; path = source/Sptr.hpp; sourceTree = SOURCE_ROOT; };
 		488DBE701720DB6A0059EBCA /* SkipList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SkipList.cpp; path = source/SkipList.cpp; sourceTree = SOURCE_ROOT; };
 		488DBE711720DB6A0059EBCA /* SkipList.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = SkipList.hpp; path = source/SkipList.hpp; sourceTree = SOURCE_ROOT; };
+		488DBE731722E9830059EBCA /* SLTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SLTest.cpp; sourceTree = "<group>"; };
 		489004A116F7281A00FA1730 /* CS540Project2 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CS540Project2; sourceTree = BUILT_PRODUCTS_DIR; };
 		489004A416F7281A00FA1730 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		489004A616F7281A00FA1730 /* CS540Project2.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = CS540Project2.1; sourceTree = "<group>"; };
@@ -72,6 +73,7 @@
 				48720FF71703D36800B61DA7 /* Sptr.hpp */,
 				488DBE701720DB6A0059EBCA /* SkipList.cpp */,
 				488DBE711720DB6A0059EBCA /* SkipList.hpp */,
+				488DBE731722E9830059EBCA /* SLTest.cpp */,
 			);
 			path = CS540Project2;
 			sourceTree = "<group>";
@@ -127,9 +129,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				489004A516F7281A00FA1730 /* main.cpp in Sources */,
 				48720FF81703D36800B61DA7 /* Sptr.cpp in Sources */,
 				488DBE721720DB6A0059EBCA /* SkipList.cpp in Sources */,
+				488DBE761722FB320059EBCA /* SLTest.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
