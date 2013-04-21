@@ -144,7 +144,11 @@ namespace cs540 {
         //in this case, U is the derived (B) and T is the base (A)
         template <typename U> Sptr(const Sptr<U> &ptr) {
             T *tPtr = static_cast<T*>(ptr.get());
+            //T *tPtr = dynamic_cast<T*>(ptr.get());
+            T &t = *(ptr.get());
+            (void)t;
             
+                        
             object = tPtr;
             originalObject = ptr.getOriginalObject();
             
@@ -159,6 +163,21 @@ namespace cs540 {
             }
             
         }
+        
+        Sptr(T *tPtr, RefCounter *rc, Object *oo) : object(tPtr), refCount(rc), originalObject(oo) {
+            object = tPtr;
+            originalObject = oo;
+            
+            //only increment reference count in the case
+            //that there is an actual object
+            if (object != nullptr) {
+                assert(refCount != nullptr);
+                refCount->Increment();
+            }
+            
+        }
+        
+        
         //handle cases where ptr refers to self AND
         //where objects are already the same
         //should do nothing in either case
@@ -190,6 +209,9 @@ namespace cs540 {
         //should do nothing in either case
         template <typename U> Sptr<T> &operator=(const Sptr<U> &ptr) {
             T *tPtr = static_cast<T*>(ptr.get());
+            
+            T &t = *(ptr.get());
+            (void)t;
             
             if ( object == tPtr )
                 return *this;
@@ -295,12 +317,7 @@ namespace cs540 {
         //therefore, we need to assign the pointer returned from
         //static_cast, but we also need to preserve the originalObject
         //and refCount from sp
-        
-        //create object using copy constructor using sp
-        Sptr<T> retPtr(sp);
-        
-        //set object to value returned from static_cast
-        retPtr.setObject(tPtr);
+        Sptr<T> retPtr(tPtr, sp.getRefCounter(), sp.getOriginalObject());
         
         //return new smart pointer
         return retPtr;
@@ -319,12 +336,7 @@ namespace cs540 {
         //we need to assign the pointer returned from dynamic_cast
         //but we also need to preserve the originalObject
         //and refCount from sp
-        
-        //create object using copy constructor using sp
-        Sptr<T> retPtr(sp);
-        
-        //set object to value returned from static_cast
-        retPtr.setObject(tPtr);
+        Sptr<T> retPtr(tPtr, sp.getRefCounter(), sp.getOriginalObject());
         
         //return new smart pointer
         return retPtr;
